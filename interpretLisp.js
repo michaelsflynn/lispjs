@@ -10,7 +10,7 @@ var lispFile = input1.toString()
 var environment = require('/Users/MichaelFlynn/Apps/GS/lispjs/environment.js')
 
 var lisp = parseLisp(lispFile)[0]
-var stdEnv = environment.getEnv()
+var stdEnv = environment.Env
 var envG = stdEnv.globCon
 
 console.log(interpLisp(lisp, envG))
@@ -87,12 +87,12 @@ function interpLisp (x, env) {
   }
 
   function buildProc (x, env) {
-    stdEnv.globCon.conCnt = stdEnv.globCon.conCnt + 1
-    stdEnv['funCon' + stdEnv.globCon.conCnt] = {
+    stdEnv.globCon.contextCnt = stdEnv.globCon.contextCnt + 1
+    stdEnv['funCon' + stdEnv.globCon.contextCnt] = {
       parEnv: env['curEnv'],
-      curEnv: 'stdEnv.funCon' + stdEnv.globCon.conCnt
+      curEnv: 'stdEnv.funCon' + stdEnv.globCon.contextCnt
     }
-    var monkPatch = stdEnv['funCon' + stdEnv.globCon.conCnt]
+    var monkPatch = stdEnv['funCon' + stdEnv.globCon.contextCnt]
     if (env['parEnv'] !== null) {
       var [, params, body, ...args] = x
       var lambda = function (...args) { return interpLisp(body, setVar(params, args, monkPatch)) }
@@ -100,9 +100,9 @@ function interpLisp (x, env) {
       return lambda(...args)
     }
     var [, params, body] = x
-    stdEnv.globCon['lambda' + stdEnv.globCon.conCnt] = function (...args) { return interpLisp(body, setVar(params, args, monkPatch)) }
+    stdEnv.globCon['lambda' + stdEnv.globCon.contextCnt] = function (...args) { return interpLisp(body, setVar(params, args, monkPatch)) }
     // console.log('Glob: ' + params + '-->' + body)
-    return 'lambda' + stdEnv.globCon.conCnt
+    return 'lambda' + stdEnv.globCon.contextCnt
   }
 
   function runProc (x, env) {
@@ -132,21 +132,12 @@ function interpLisp (x, env) {
 // *******************************************************************************************
 
 function parseLisp (str) {
-  var result = parseSpace(str)
-  if (result !== null) {
-    return result
-  }
-  result = parseNum(str)
-  if (result !== null) {
-    return result
-  }
-  result = parseParen(str)
-  if (result !== null) {
-    return result
-  }
-  result = parseChar(str)
-  if (result !== null) {
-    return result
+  var parserArr = [parseSpace, parseNum, parseParen, parseChar]
+  for (var i = 0; i < parserArr.length; i++) {
+    var result = parserArr[i](str)
+    if (result !== null) {
+      return result
+    }
   }
 }
 
@@ -195,19 +186,21 @@ function parseParen (str) {
   var arr = []
   str = str.slice(1)
   while (str.charAt(0) !== ')') {
-    var tmpSpc = parseSpace(str)
-    if (tmpSpc !== null) {
-      str = tmpSpc[1]
-    }
+    str = checkSpace(str)
     var [value, rest] = parseLisp(str)
     if (value !== undefined) {
       arr.push(value)
       str = rest
-      var tmpSpc = parseSpace(str)
-      if (tmpSpc !== null) {
-        str = tmpSpc[1]
-      }
+      str = checkSpace(str)
     }
   }
   return [arr, str.slice(1)]
+}
+
+function checkSpace (str) {
+  var tmpSpc = parseSpace(str)
+  if (tmpSpc !== null) {
+    return tmpSpc[1]
+  }
+  return str
 }

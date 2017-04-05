@@ -1,10 +1,7 @@
 // *******************************************************************************************
-// Below are "HELPER" Functions and Environment Objects for the Lisp Interpreter
+// Below is the Environment Objects for the Lisp Interpreter
 // *******************************************************************************************
-
-module.exports = {
-  getEnv: function () {
-    var stdEnv = {
+  var Env = {
       globCon: {
         '+': 'add',
         '-': 'sub',
@@ -32,11 +29,11 @@ module.exports = {
         'eq?': function (x, y) { return x === y },
         'equal?': function (x, y) { return x === y },
         length: function (x) { return x.length },
-        'list?': function (x) { return stdEnv.realTypeOf(x) === 'Array' },
-        'null?': function (x) { return stdEnv.realTypeOf(x) === 'Null' },
-        'number?': function (x) { return stdEnv.realTypeOf(x) === 'Number' },
-        'procedure?': function (x) { return stdEnv.realTypeOf(x) === 'Function' },
-        'symbol?': function (x) { return /^\S*[^\d]/.test(x) && stdEnv.realTypeOf(x) !== 'Array' },
+        'list?': function (x) { return Env.realTypeOf(x) === 'Array' },
+        'null?': function (x) { return Env.realTypeOf(x) === 'Null' },
+        'number?': function (x) { return Env.realTypeOf(x) === 'Number' },
+        'procedure?': function (x) { return Env.realTypeOf(x) === 'Function' },
+        'symbol?': function (x) { return /^\S*[^\d]/.test(x) && Env.realTypeOf(x) !== 'Array' },
         add: function (...args) { var a = args; return a.reduce(function (e1, e2) { return e1 + e2 }) },
         sub: function (...args) { var a = args; return a.reduce(function (e1, e2) { return e1 - e2 }) },
         mul: function (...args) { var a = args; return a.reduce(function (e1, e2) { return e1 * e2 }) },
@@ -56,14 +53,12 @@ module.exports = {
         maxFunc: function (...args) { return Math.max(...args) },
         minFunc: function (...args) { return Math.min(...args) },
         roundFunc: function (x) { return Math.round(x) },
-        conCnt: 0,
+        contextCnt: 0,
         parEnv: null,
         curEnv: 'stdEnv.globCon'
       },
       realTypeOf: function (obj) {
         return Object.prototype.toString.call(obj).slice(8, -1)
       }
-    }
-    return stdEnv
   }
-}
+exports.Env = Env
